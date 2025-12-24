@@ -489,33 +489,6 @@ go-swagger was chosen for API documentation because:
 
 ---
 
-## Future Improvements
-
-### Short Term
-
-- [x] Add OpenAPI/Swagger documentation
-- [ ] Add rate limiting middleware
-- [ ] Add request validation middleware (JSON schema)
-- [ ] Add Prometheus metrics endpoint
-
-### Medium Term
-
-- [ ] Persistent statistics storage (Redis/PostgreSQL)
-- [ ] Distributed statistics with eventual consistency
-- [ ] Cache layer for repeated requests
-- [ ] API versioning (v1/fizzbuzz)
-- [ ] Migrate to OpenAPI 3.0
-
-### Long Term
-
-- [ ] gRPC support alongside REST
-- [ ] Event sourcing for statistics
-- [ ] Kubernetes Helm chart
-- [ ] Horizontal scaling with shared statistics store
-- [ ] Client SDK generation from Swagger spec
-
----
-
 ## Development Commands
 
 ```bash
