@@ -12,7 +12,6 @@ A production-ready, customizable FizzBuzz REST API with statistics tracking, bui
 - [Project Structure](#project-structure)
 - [Configuration](#configuration)
 - [Design Decisions](#design-decisions)
-- [Future Improvements](#future-improvements)
 
 ---
 
