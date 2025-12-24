@@ -1,7 +1,7 @@
 package domain_test
 
 import (
-	"fizzbuzz-service/domain/entity"
+	"fizzbuzz-service/internal/domain/entity"
 	"strings"
 	"testing"
 )
