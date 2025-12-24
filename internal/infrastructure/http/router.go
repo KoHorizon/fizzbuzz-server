@@ -9,6 +9,7 @@ import (
 
 func NewRouter(
 	fizzBuzzHandler *handler.FizzBuzzHandler,
+	statsHandler *handler.StatisticsHandler,
 	healthHandler *handler.HealthHandler,
 	logger *slog.Logger,
 

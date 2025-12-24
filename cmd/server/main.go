@@ -9,6 +9,7 @@ import (
 	"fizzbuzz-service/internal/infrastructure/config"
 	infrahttp "fizzbuzz-service/internal/infrastructure/http"
 	"fizzbuzz-service/internal/infrastructure/http/handler"
+	"fizzbuzz-service/internal/infrastructure/persistence/inmemory"
 	"fizzbuzz-service/internal/infrastructure/server"
 )
 
@@ -23,13 +24,16 @@ func main() {
 
 	// 3. Wire dependencies (manual DI - could use wire/fx for larger apps)
 	generator := service.NewFizzBuzzGenerator()
+	statsRepo := inmemory.NewStatisticsRepository()
 
-	generateUseCase := application.NewGenerateFizzBuzzUseCase(generator, cfg.MaxLimit, logger)
+	generateUseCase := application.NewGenerateFizzBuzzUseCase(generator, statsRepo, cfg.MaxLimit, logger)
+	getStatsUseCase := application.NewGetStatisticsUseCase(statsRepo)
 
 	fizzHandler := handler.NewFizzBuzzHandler(generateUseCase, logger)
+	statsHandler := handler.NewStatisticsHandler(getStatsUseCase, logger)
 	healthHandler := handler.NewHealthHandler()
 
-	router := infrahttp.NewRouter(fizzHandler, healthHandler, logger)
+	router := infrahttp.NewRouter(fizzHandler, statsHandler, healthHandler, logger)
 
 	// 4. Configure and run server
 	serverCfg := server.Default()

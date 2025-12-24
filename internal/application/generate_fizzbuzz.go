@@ -9,24 +9,33 @@ import (
 )
 
 type GenerateFizzBuzzUseCase struct {
-	generator *service.FizzBuzzGenerator
-	maxLimit  int
-	logger    *slog.Logger
+	generator    *service.FizzBuzzGenerator
+	statsUpdater StatisticsUpdater
+	maxLimit     int
+	logger       *slog.Logger
 }
 
+// StatisticsUpdater is a port for updating statistics
+type StatisticsUpdater interface {
+	UpdateStats(ctx context.Context, query entity.FizzBuzzQuery) error
+}
+
+// NewGenerateFizzBuzzUseCase creates the use case
 func NewGenerateFizzBuzzUseCase(
 	generator *service.FizzBuzzGenerator,
+	statsUpdater StatisticsUpdater,
 	maxLimit int,
 	logger *slog.Logger,
 ) *GenerateFizzBuzzUseCase {
 	return &GenerateFizzBuzzUseCase{
-		generator: generator,
-		maxLimit:  maxLimit,
-		logger:    logger,
+		generator:    generator,
+		statsUpdater: statsUpdater,
+		maxLimit:     maxLimit,
+		logger:       logger,
 	}
 }
 
-// Execute validates input and generates the sequence
+// Generate validates input and generates the sequence
 func (uc *GenerateFizzBuzzUseCase) Generate(
 	ctx context.Context,
 	query entity.FizzBuzzQuery,
@@ -36,6 +45,18 @@ func (uc *GenerateFizzBuzzUseCase) Generate(
 	if !validation.Valid {
 		return nil, domain.NewValidationError("invalid parameters", validation.Errors...)
 	}
+
+	// Update statistics asynchronously
+	// We use a separate goroutine to not block the main request
+	// Errors are logged but don't fail the main request (stats are non-critical)
+	go func(ctx context.Context) {
+		if err := uc.statsUpdater.UpdateStats(ctx, query); err != nil {
+			uc.logger.Error("failed to update statistics",
+				"error", err,
+				"query_key", query.Key(),
+			)
+		}
+	}(ctx)
 
 	return uc.generator.Generate(query), nil
 }

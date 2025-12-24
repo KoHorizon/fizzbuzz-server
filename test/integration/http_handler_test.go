@@ -13,6 +13,7 @@ import (
 	"fizzbuzz-service/internal/application"
 	"fizzbuzz-service/internal/domain/service"
 	"fizzbuzz-service/internal/infrastructure/http/handler"
+	"fizzbuzz-service/internal/infrastructure/persistence/inmemory"
 )
 
 func newTestLogger() *slog.Logger {
@@ -21,9 +22,10 @@ func newTestLogger() *slog.Logger {
 
 func TestFizzBuzzHandler_Integration(t *testing.T) {
 	// Setup real dependencies (except external services)
+	statsRepo := inmemory.NewStatisticsRepository()
 	generator := service.NewFizzBuzzGenerator()
 	logger := newTestLogger()
-	useCase := application.NewGenerateFizzBuzzUseCase(generator, 10000, logger)
+	useCase := application.NewGenerateFizzBuzzUseCase(generator, statsRepo, 10000, logger)
 	fizzHandler := handler.NewFizzBuzzHandler(useCase, logger)
 
 	// Create a mux and register routes for proper method routing
@@ -167,4 +169,49 @@ func TestFizzBuzzHandler_Integration(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestStatisticsHandler_Integration(t *testing.T) {
+	statsRepo := inmemory.NewStatisticsRepository()
+	logger := newTestLogger()
+	useCase := application.NewGetStatisticsUseCase(statsRepo)
+	statsHandler := handler.NewStatisticsHandler(useCase, logger)
+
+	// Create a mux and register routes for proper method routing
+	mux := http.NewServeMux()
+	statsHandler.RegisterRoutes(mux)
+
+	t.Run("returns empty stats initially", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/statistics", nil)
+		w := httptest.NewRecorder()
+
+		mux.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("expected 200, got %d", w.Code)
+		}
+
+		var resp map[string]interface{}
+		json.NewDecoder(w.Body).Decode(&resp)
+
+		if resp["most_frequent_request"] != nil {
+			t.Error("expected null most_frequent_request")
+		}
+
+		hits := resp["hits"].(float64)
+		if hits != 0 {
+			t.Errorf("expected 0 hits, got %f", hits)
+		}
+	})
+
+	t.Run("POST method not allowed", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/statistics", nil)
+		w := httptest.NewRecorder()
+
+		mux.ServeHTTP(w, req)
+
+		if w.Code != http.StatusMethodNotAllowed {
+			t.Errorf("expected 405, got %d", w.Code)
+		}
+	})
 }
