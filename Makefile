@@ -1,4 +1,4 @@
-.PHONY: all build run test test-coverage test-race lint clean docker-build docker-run help
+.PHONY: all build run test test-coverage test-race lint clean docker-build docker-run swagger swagger-serve help
 
 # Default target
 all: test build
@@ -51,6 +51,28 @@ fmt:
 tidy:
 	go mod tidy
 
+# Generate Swagger documentation (requires swagger CLI)
+swagger:
+	@echo "Generating Swagger documentation..."
+	@command -v swagger >/dev/null 2>&1 || { echo "swagger CLI not found. Install with: go install github.com/go-swagger/go-swagger/cmd/swagger@latest"; exit 1; }
+	swagger generate spec -o ./docs/swagger.json --scan-models
+	@echo "Swagger spec generated at ./docs/swagger.json"
+	@echo "Converting to YAML..."
+	swagger generate spec -o ./docs/swagger.yaml --scan-models
+	@echo "Swagger spec generated at ./docs/swagger.yaml"
+
+# Serve Swagger UI (requires swagger CLI)
+swagger-serve:
+	@command -v swagger >/dev/null 2>&1 || { echo "swagger CLI not found. Install with: go install github.com/go-swagger/go-swagger/cmd/swagger@latest"; exit 1; }
+	@echo "Serving Swagger UI at http://localhost:8081/docs"
+	@echo "Press Ctrl+C to stop"
+	swagger serve -F=swagger --port=8081 ./docs/swagger.yaml
+
+# Validate Swagger spec
+swagger-validate:
+	@command -v swagger >/dev/null 2>&1 || { echo "swagger CLI not found. Install with: go install github.com/go-swagger/go-swagger/cmd/swagger@latest"; exit 1; }
+	swagger validate ./docs/swagger.yaml
+
 # Build Docker image
 docker-build:
 	docker build -t fizzbuzz-service:latest .
@@ -68,6 +90,7 @@ clean:
 	go clean
 	rm -f bin/fizzbuzz-service
 	rm -f coverage.out coverage.html
+	rm -f docs/swagger.json docs/swagger.yaml
 	docker rmi fizzbuzz-service:latest 2>/dev/null || true
 
 # Show help
@@ -85,6 +108,9 @@ help:
 	@echo "  lint           - Run linter"
 	@echo "  fmt            - Format code"
 	@echo "  tidy           - Tidy dependencies"
+	@echo "  swagger        - Generate Swagger documentation"
+	@echo "  swagger-serve  - Serve Swagger UI"
+	@echo "  swagger-validate - Validate Swagger spec"
 	@echo "  docker-build   - Build Docker image"
 	@echo "  docker-run     - Run with Docker Compose"
 	@echo "  docker-stop    - Stop Docker containers"
