@@ -178,3 +178,76 @@ func TestFizzBuzzQuery_Validate(t *testing.T) {
 		})
 	}
 }
+
+func TestFizzBuzzQuery_Key(t *testing.T) {
+	tests := []struct {
+		name    string
+		query1  entity.FizzBuzzQuery
+		query2  entity.FizzBuzzQuery
+		sameKey bool
+	}{
+		{
+			name: "identical queries have same key",
+			query1: entity.FizzBuzzQuery{
+				FirstDivisor: 3, SecondDivisor: 5, UpperLimit: 15,
+				FirstString: "fizz", SecondString: "buzz",
+			},
+			query2: entity.FizzBuzzQuery{
+				FirstDivisor: 3, SecondDivisor: 5, UpperLimit: 15,
+				FirstString: "fizz", SecondString: "buzz",
+			},
+			sameKey: true,
+		},
+		{
+			name: "different limits have different keys",
+			query1: entity.FizzBuzzQuery{
+				FirstDivisor: 3, SecondDivisor: 5, UpperLimit: 15,
+				FirstString: "fizz", SecondString: "buzz",
+			},
+			query2: entity.FizzBuzzQuery{
+				FirstDivisor: 3, SecondDivisor: 5, UpperLimit: 100,
+				FirstString: "fizz", SecondString: "buzz",
+			},
+			sameKey: false,
+		},
+		{
+			name: "different divisors have different keys",
+			query1: entity.FizzBuzzQuery{
+				FirstDivisor: 3, SecondDivisor: 5, UpperLimit: 15,
+				FirstString: "fizz", SecondString: "buzz",
+			},
+			query2: entity.FizzBuzzQuery{
+				FirstDivisor: 2, SecondDivisor: 7, UpperLimit: 15,
+				FirstString: "fizz", SecondString: "buzz",
+			},
+			sameKey: false,
+		},
+		{
+			name: "different strings have different keys",
+			query1: entity.FizzBuzzQuery{
+				FirstDivisor: 3, SecondDivisor: 5, UpperLimit: 15,
+				FirstString: "fizz", SecondString: "buzz",
+			},
+			query2: entity.FizzBuzzQuery{
+				FirstDivisor: 3, SecondDivisor: 5, UpperLimit: 15,
+				FirstString: "foo", SecondString: "bar",
+			},
+			sameKey: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			key1 := tt.query1.Key()
+			key2 := tt.query2.Key()
+
+			if tt.sameKey && key1 != key2 {
+				t.Errorf("expected same key, got %q and %q", key1, key2)
+			}
+
+			if !tt.sameKey && key1 == key2 {
+				t.Errorf("expected different keys, both are %q", key1)
+			}
+		})
+	}
+}

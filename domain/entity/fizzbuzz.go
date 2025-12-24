@@ -45,3 +45,15 @@ func (q *FizzBuzzQuery) Validate(maxLimit int) ValidationResult {
 		Errors: errors,
 	}
 }
+
+// Key generates a unique identifier for this query (used for statistics)
+// Includes ALL parameters to correctly track unique request patterns
+func (q FizzBuzzQuery) Key() string {
+	return fmt.Sprintf("%d:%d:%d:%s:%s",
+		q.FirstDivisor,
+		q.SecondDivisor,
+		q.UpperLimit,
+		q.FirstString,
+		q.SecondString,
+	)
+}
