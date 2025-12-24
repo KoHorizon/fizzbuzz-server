@@ -1,0 +1,170 @@
+package integration_test
+
+import (
+	"bytes"
+	"encoding/json"
+	"io"
+	"log/slog"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+
+	"fizzbuzz-service/internal/application"
+	"fizzbuzz-service/internal/domain/service"
+	"fizzbuzz-service/internal/infrastructure/http/handler"
+)
+
+func newTestLogger() *slog.Logger {
+	return slog.New(slog.NewTextHandler(io.Discard, nil))
+}
+
+func TestFizzBuzzHandler_Integration(t *testing.T) {
+	// Setup real dependencies (except external services)
+	generator := service.NewFizzBuzzGenerator()
+	logger := newTestLogger()
+	useCase := application.NewGenerateFizzBuzzUseCase(generator, 10000, logger)
+	fizzHandler := handler.NewFizzBuzzHandler(useCase, logger)
+
+	// Create a mux and register routes for proper method routing
+	mux := http.NewServeMux()
+	fizzHandler.RegisterRoutes(mux)
+
+	tests := []struct {
+		name           string
+		method         string
+		body           interface{}
+		expectedStatus int
+		validateBody   func(t *testing.T, body []byte)
+	}{
+		{
+			name:   "valid request returns fizzbuzz sequence",
+			method: http.MethodPost,
+			body: map[string]interface{}{
+				"int1": 3, "int2": 5, "limit": 15,
+				"str1": "fizz", "str2": "buzz",
+			},
+			expectedStatus: http.StatusOK,
+			validateBody: func(t *testing.T, body []byte) {
+				var resp map[string]interface{}
+				json.Unmarshal(body, &resp)
+
+				result, ok := resp["result"].([]interface{})
+				if !ok {
+					t.Fatal("missing 'result' field")
+				}
+
+				if len(result) != 15 {
+					t.Errorf("expected 15 items, got %d", len(result))
+				}
+
+				// Check fizzbuzz at position 15
+				if result[14] != "fizzbuzz" {
+					t.Errorf("expected 'fizzbuzz' at position 15, got %v", result[14])
+				}
+			},
+		},
+		{
+			name:           "invalid JSON returns 400",
+			method:         http.MethodPost,
+			body:           "not json",
+			expectedStatus: http.StatusBadRequest,
+			validateBody: func(t *testing.T, body []byte) {
+				var resp map[string]interface{}
+				json.Unmarshal(body, &resp)
+
+				if _, ok := resp["error"]; !ok {
+					t.Error("expected 'error' field in response")
+				}
+			},
+		},
+		{
+			name:   "validation error returns detailed errors",
+			method: http.MethodPost,
+			body: map[string]interface{}{
+				"int1": 0, "int2": 0, "limit": 0,
+				"str1": "", "str2": "",
+			},
+			expectedStatus: http.StatusBadRequest,
+			validateBody: func(t *testing.T, body []byte) {
+				var resp map[string]interface{}
+				json.Unmarshal(body, &resp)
+
+				details, ok := resp["details"].([]interface{})
+				if !ok {
+					t.Fatal("expected 'details' array in response")
+				}
+
+				if len(details) != 5 {
+					t.Errorf("expected 5 validation errors, got %d", len(details))
+				}
+			},
+		},
+		{
+			name:   "limit too high returns validation error",
+			method: http.MethodPost,
+			body: map[string]interface{}{
+				"int1": 3, "int2": 5, "limit": 20000,
+				"str1": "fizz", "str2": "buzz",
+			},
+			expectedStatus: http.StatusBadRequest,
+			validateBody: func(t *testing.T, body []byte) {
+				var resp map[string]interface{}
+				json.Unmarshal(body, &resp)
+
+				details := resp["details"].([]interface{})
+				found := false
+				for _, d := range details {
+					if str, ok := d.(string); ok && strings.Contains(str, "limit") {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Error("expected error about limit")
+				}
+			},
+		},
+		{
+			name:           "GET method not allowed",
+			method:         http.MethodGet,
+			body:           nil,
+			expectedStatus: http.StatusMethodNotAllowed,
+		},
+		{
+			name:           "PUT method not allowed",
+			method:         http.MethodPut,
+			body:           nil,
+			expectedStatus: http.StatusMethodNotAllowed,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var reqBody []byte
+			if tt.body != nil {
+				switch v := tt.body.(type) {
+				case string:
+					reqBody = []byte(v)
+				default:
+					reqBody, _ = json.Marshal(tt.body)
+				}
+			}
+
+			req := httptest.NewRequest(tt.method, "/fizzbuzz", bytes.NewReader(reqBody))
+			req.Header.Set("Content-Type", "application/json")
+			w := httptest.NewRecorder()
+
+			mux.ServeHTTP(w, req)
+
+			if w.Code != tt.expectedStatus {
+				t.Errorf("expected status %d, got %d", tt.expectedStatus, w.Code)
+				t.Logf("Response body: %s", w.Body.String())
+			}
+
+			if tt.validateBody != nil {
+				tt.validateBody(t, w.Body.Bytes())
+			}
+		})
+	}
+}
