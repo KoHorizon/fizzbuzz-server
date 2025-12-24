@@ -1,26 +1,31 @@
+// internal/infrastructure/http/middleware/logging.go
 package middleware
 
 import (
 	"log/slog"
 	"net/http"
 	"time"
+
+	"github.com/go-chi/chi/v5/middleware"
 )
 
-// LoggingMiddleware logs all requests with duration
 func LoggingMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
 
-			// Wrap response writer to capture status code
-			wrappedResponse := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
+			wrapped := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
 
-			next.ServeHTTP(wrappedResponse, r)
+			next.ServeHTTP(wrapped, r)
+
+			// Get request ID from Chi's middleware
+			requestID := middleware.GetReqID(r.Context())
 
 			logger.Info("request completed",
+				"request_id", requestID,
 				"method", r.Method,
 				"path", r.URL.Path,
-				"status", wrappedResponse.statusCode,
+				"status", wrapped.statusCode,
 				"duration_ms", time.Since(start).Milliseconds(),
 				"remote_addr", r.RemoteAddr,
 			)
