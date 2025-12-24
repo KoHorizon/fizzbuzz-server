@@ -2,6 +2,7 @@ package http
 
 import (
 	"fizzbuzz-service/internal/infrastructure/http/handler"
+	"fizzbuzz-service/internal/infrastructure/http/middleware"
 	"log/slog"
 	"net/http"
 )
@@ -17,5 +18,7 @@ func NewRouter(
 	healthHandler.RegisterRoutes(mux)
 
 	var h http.Handler = mux
+	h = middleware.LoggingMiddleware(logger)(h)
+	h = middleware.RecoveryMiddleware(logger)(h)
 	return h
 }
