@@ -7,6 +7,8 @@ import (
 	"fizzbuzz-service/internal/domain/entity"
 	"log/slog"
 	"net/http"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type FizzBuzzHandler struct {
@@ -44,8 +46,8 @@ func NewFizzBuzzHandler(
 }
 
 // RegisterRoutes registers all fizzbuzz-related routes
-func (h *FizzBuzzHandler) RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("POST /fizzbuzz", h.Generate)
+func (h *FizzBuzzHandler) RegisterRoutes(r chi.Router) {
+	r.Post("/fizzbuzz", h.Generate)
 }
 
 // Generate handles POST /fizzbuzz - generates a fizzbuzz sequence

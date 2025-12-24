@@ -14,6 +14,8 @@ import (
 	"fizzbuzz-service/internal/domain/service"
 	"fizzbuzz-service/internal/infrastructure/http/handler"
 	"fizzbuzz-service/internal/infrastructure/persistence/inmemory"
+
+	"github.com/go-chi/chi/v5"
 )
 
 func newTestLogger() *slog.Logger {
@@ -28,9 +30,9 @@ func TestFizzBuzzHandler_Integration(t *testing.T) {
 	useCase := application.NewGenerateFizzBuzzUseCase(generator, statsRepo, 10000, logger)
 	fizzHandler := handler.NewFizzBuzzHandler(useCase, logger)
 
-	// Create a mux and register routes for proper method routing
-	mux := http.NewServeMux()
-	fizzHandler.RegisterRoutes(mux)
+	// Create a Chi router and register routes
+	r := chi.NewRouter()
+	fizzHandler.RegisterRoutes(r)
 
 	tests := []struct {
 		name           string
@@ -157,7 +159,7 @@ func TestFizzBuzzHandler_Integration(t *testing.T) {
 			req.Header.Set("Content-Type", "application/json")
 			w := httptest.NewRecorder()
 
-			mux.ServeHTTP(w, req)
+			r.ServeHTTP(w, req)
 
 			if w.Code != tt.expectedStatus {
 				t.Errorf("expected status %d, got %d", tt.expectedStatus, w.Code)
@@ -177,15 +179,15 @@ func TestStatisticsHandler_Integration(t *testing.T) {
 	useCase := application.NewGetStatisticsUseCase(statsRepo)
 	statsHandler := handler.NewStatisticsHandler(useCase, logger)
 
-	// Create a mux and register routes for proper method routing
-	mux := http.NewServeMux()
-	statsHandler.RegisterRoutes(mux)
+	// Create a Chi router and register routes
+	r := chi.NewRouter()
+	statsHandler.RegisterRoutes(r)
 
 	t.Run("returns empty stats initially", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/statistics", nil)
 		w := httptest.NewRecorder()
 
-		mux.ServeHTTP(w, req)
+		r.ServeHTTP(w, req)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected 200, got %d", w.Code)
@@ -208,7 +210,7 @@ func TestStatisticsHandler_Integration(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/statistics", nil)
 		w := httptest.NewRecorder()
 
-		mux.ServeHTTP(w, req)
+		r.ServeHTTP(w, req)
 
 		if w.Code != http.StatusMethodNotAllowed {
 			t.Errorf("expected 405, got %d", w.Code)

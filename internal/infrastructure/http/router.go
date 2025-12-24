@@ -2,9 +2,14 @@ package http
 
 import (
 	"fizzbuzz-service/internal/infrastructure/http/handler"
-	"fizzbuzz-service/internal/infrastructure/http/middleware"
 	"log/slog"
 	"net/http"
+	"time"
+
+	custommw "fizzbuzz-service/internal/infrastructure/http/middleware"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 func NewRouter(
@@ -14,17 +19,19 @@ func NewRouter(
 	logger *slog.Logger,
 
 ) http.Handler {
-	mux := http.NewServeMux()
+	r := chi.NewRouter()
 
-	// Each handler registers its own routes
-	fizzBuzzHandler.RegisterRoutes(mux)
-	statsHandler.RegisterRoutes(mux)
-	healthHandler.RegisterRoutes(mux)
+	// Middleware stack (top = outermost, executes first)
+	r.Use(custommw.RecoveryMiddleware(logger))  // Custom: slog + JSON response
+	r.Use(middleware.RequestID)                 // Chi: inject X-Request-Id
+	r.Use(middleware.RealIP)                    // Chi: get real IP
+	r.Use(custommw.LoggingMiddleware(logger))   // Custom: slog structured logging
+	r.Use(middleware.Timeout(30 * time.Second)) // Chi: request timeout
 
-	// Apply middlewares (order matters: recovery should be outermost)
-	var h http.Handler = mux
-	h = middleware.LoggingMiddleware(logger)(h)
-	h = middleware.RecoveryMiddleware(logger)(h)
+	// Register routes
+	fizzBuzzHandler.RegisterRoutes(r)
+	statsHandler.RegisterRoutes(r)
+	healthHandler.RegisterRoutes(r)
 
-	return h
+	return r
 }

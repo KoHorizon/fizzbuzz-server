@@ -6,6 +6,8 @@ import (
 	"net/http"
 
 	"fizzbuzz-service/internal/application"
+
+	"github.com/go-chi/chi/v5"
 )
 
 // StatisticsHandler handles HTTP requests for statistics operations
@@ -26,8 +28,8 @@ func NewStatisticsHandler(
 }
 
 // RegisterRoutes registers all statistics-related routes
-func (h *StatisticsHandler) RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("GET /statistics", h.GetMostFrequent)
+func (h *StatisticsHandler) RegisterRoutes(r chi.Router) {
+	r.Get("/statistics", h.GetMostFrequent)
 }
 
 // GetMostFrequent handles GET /statistics - returns the most frequent request

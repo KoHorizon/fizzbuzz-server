@@ -3,6 +3,8 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/go-chi/chi/v5"
 )
 
 // HealthHandler handles HTTP requests for health checks
@@ -18,8 +20,8 @@ func NewHealthHandler() *HealthHandler {
 }
 
 // RegisterRoutes registers all health-related routes
-func (h *HealthHandler) RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("GET /health", h.Check)
+func (h *HealthHandler) RegisterRoutes(r chi.Router) {
+	r.Get("/health", h.Check)
 }
 
 // Check handles GET /health - returns service health status
