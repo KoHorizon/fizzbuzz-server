@@ -10,9 +10,37 @@ import (
 	"io"
 	"log/slog"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
+
+// mockStatsUpdater records calls for verification
+type mockStatsUpdater struct {
+	mu        sync.Mutex
+	calls     []entity.FizzBuzzQuery
+	shouldErr bool
+}
+
+func (m *mockStatsUpdater) UpdateStats(ctx context.Context, query entity.FizzBuzzQuery) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if m.shouldErr {
+		return errors.New("mock error")
+	}
+
+	m.calls = append(m.calls, query)
+	return nil
+}
+
+func (m *mockStatsUpdater) getCalls() []entity.FizzBuzzQuery {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	result := make([]entity.FizzBuzzQuery, len(m.calls))
+	copy(result, m.calls)
+	return result
+}
 
 func newTestLogger() *slog.Logger {
 	return slog.New(slog.NewTextHandler(io.Discard, nil))
@@ -23,7 +51,8 @@ func TestGenerateFizzBuzzUseCase_Execute(t *testing.T) {
 	logger := newTestLogger()
 
 	t.Run("valid request returns correct result", func(t *testing.T) {
-		useCase := application.NewGenerateFizzBuzzUseCase(generator, 100, logger)
+		mockUpdater := &mockStatsUpdater{}
+		useCase := application.NewGenerateFizzBuzzUseCase(generator, mockUpdater, 100, logger)
 
 		query := entity.FizzBuzzQuery{
 			FirstDivisor:  3,
@@ -50,7 +79,8 @@ func TestGenerateFizzBuzzUseCase_Execute(t *testing.T) {
 	})
 
 	t.Run("returns validation error for zero divisor", func(t *testing.T) {
-		useCase := application.NewGenerateFizzBuzzUseCase(generator, 100, logger)
+		mockUpdater := &mockStatsUpdater{}
+		useCase := application.NewGenerateFizzBuzzUseCase(generator, mockUpdater, 100, logger)
 
 		query := entity.FizzBuzzQuery{
 			FirstDivisor:  0,
@@ -73,7 +103,8 @@ func TestGenerateFizzBuzzUseCase_Execute(t *testing.T) {
 	})
 
 	t.Run("returns validation error when limit exceeds max", func(t *testing.T) {
-		useCase := application.NewGenerateFizzBuzzUseCase(generator, 100, logger)
+		mockUpdater := &mockStatsUpdater{}
+		useCase := application.NewGenerateFizzBuzzUseCase(generator, mockUpdater, 100, logger)
 
 		query := entity.FizzBuzzQuery{
 			FirstDivisor:  3,
@@ -108,7 +139,8 @@ func TestGenerateFizzBuzzUseCase_Execute(t *testing.T) {
 	})
 
 	t.Run("returns multiple validation errors", func(t *testing.T) {
-		useCase := application.NewGenerateFizzBuzzUseCase(generator, 100, logger)
+		mockUpdater := &mockStatsUpdater{}
+		useCase := application.NewGenerateFizzBuzzUseCase(generator, mockUpdater, 100, logger)
 
 		query := entity.FizzBuzzQuery{
 			FirstDivisor:  0,
@@ -131,7 +163,8 @@ func TestGenerateFizzBuzzUseCase_Execute(t *testing.T) {
 	})
 
 	t.Run("stats updater is called asynchronously", func(t *testing.T) {
-		useCase := application.NewGenerateFizzBuzzUseCase(generator, 100, logger)
+		mockUpdater := &mockStatsUpdater{}
+		useCase := application.NewGenerateFizzBuzzUseCase(generator, mockUpdater, 100, logger)
 
 		query := entity.FizzBuzzQuery{
 			FirstDivisor:  3,
@@ -149,10 +182,19 @@ func TestGenerateFizzBuzzUseCase_Execute(t *testing.T) {
 		// Wait for async goroutine
 		time.Sleep(50 * time.Millisecond)
 
+		calls := mockUpdater.getCalls()
+		if len(calls) != 1 {
+			t.Errorf("expected 1 stats update call, got %d", len(calls))
+		}
+
+		if len(calls) > 0 && calls[0].UpperLimit != 10 {
+			t.Errorf("expected query with limit 10, got %d", calls[0].UpperLimit)
+		}
 	})
 
 	t.Run("stats error does not fail the request", func(t *testing.T) {
-		useCase := application.NewGenerateFizzBuzzUseCase(generator, 100, logger)
+		mockUpdater := &mockStatsUpdater{shouldErr: true}
+		useCase := application.NewGenerateFizzBuzzUseCase(generator, mockUpdater, 100, logger)
 
 		query := entity.FizzBuzzQuery{
 			FirstDivisor:  3,
@@ -173,4 +215,63 @@ func TestGenerateFizzBuzzUseCase_Execute(t *testing.T) {
 			t.Errorf("expected 10 results, got %d", len(result))
 		}
 	})
+}
+
+func TestGetStatisticsUseCase_Execute(t *testing.T) {
+	t.Run("returns stats from repository", func(t *testing.T) {
+		mockRepo := &mockStatsRepository{
+			summary: &entity.StatisticsSummary{
+				MostFrequentQuery: &entity.FizzBuzzQueryResponse{
+					Int1: 3, Int2: 5, Limit: 15, Str1: "fizz", Str2: "buzz",
+				},
+				HitCount: 42,
+			},
+		}
+
+		useCase := application.NewGetStatisticsUseCase(mockRepo)
+
+		stats, err := useCase.Get(context.Background())
+
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if stats.HitCount != 42 {
+			t.Errorf("expected 42 hits, got %d", stats.HitCount)
+		}
+	})
+
+	t.Run("returns empty stats when no requests", func(t *testing.T) {
+		mockRepo := &mockStatsRepository{
+			summary: &entity.StatisticsSummary{
+				MostFrequentQuery: nil,
+				HitCount:          0,
+			},
+		}
+
+		useCase := application.NewGetStatisticsUseCase(mockRepo)
+
+		stats, err := useCase.Get(context.Background())
+
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if stats.HitCount != 0 {
+			t.Errorf("expected 0 hits, got %d", stats.HitCount)
+		}
+
+		if stats.MostFrequentQuery != nil {
+			t.Errorf("expected nil query, got %+v", stats.MostFrequentQuery)
+		}
+	})
+}
+
+type mockStatsRepository struct {
+	summary *entity.StatisticsSummary
+	err     error
+}
+
+func (m *mockStatsRepository) GetMostFrequent(ctx context.Context) (*entity.StatisticsSummary, error) {
+	return m.summary, m.err
 }
