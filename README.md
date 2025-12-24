@@ -24,6 +24,7 @@ This service exposes a REST API that generates customizable FizzBuzz sequences a
 - **Domain-Driven Design** with rich domain entities
 - **Comprehensive testing** at unit, integration, and E2E levels
 - **Production-ready** configuration with graceful shutdown, structured logging, and health checks
+- **OpenAPI/Swagger documentation** for API specification and interactive exploration
 
 ### Features
 
@@ -34,6 +35,7 @@ This service exposes a REST API that generates customizable FizzBuzz sequences a
 | Health Check | Kubernetes/Docker-ready health endpoint |
 | Structured Logging | JSON logging with request tracing |
 | Graceful Shutdown | Clean connection draining on SIGTERM |
+| **Swagger Documentation** | **Interactive API documentation and testing** |
 
 ---
 
@@ -42,6 +44,7 @@ This service exposes a REST API that generates customizable FizzBuzz sequences a
 ### Prerequisites
 
 - Go 1.24+ or Docker
+- (Optional) swagger CLI for generating API docs
 
 ### Run Locally
 
@@ -168,6 +171,37 @@ sequenceDiagram
 ---
 
 ## API Documentation
+
+### Interactive Documentation with Swagger
+
+This project includes **OpenAPI 2.0 (Swagger)** documentation for interactive API exploration.
+
+#### Generate Swagger Documentation
+
+```bash
+# Install swagger CLI (first time only)
+go install github.com/go-swagger/go-swagger/cmd/swagger@latest
+
+# Generate swagger.json and swagger.yaml
+make swagger
+```
+
+#### View Interactive Documentation
+
+```bash
+# Serve Swagger UI at http://localhost:8081/docs
+make swagger-serve
+```
+
+The Swagger UI allows you to:
+- **Browse all API endpoints** with detailed descriptions
+- **View request/response schemas** with examples
+- **Try out API calls** directly from the browser
+- **Download OpenAPI spec** in JSON or YAML format
+
+#### Manual API Reference
+
+For detailed Swagger setup and usage, see [docs/SWAGGER.md](docs/SWAGGER.md).
 
 ### POST /fizzbuzz
 
@@ -323,6 +357,11 @@ fizzbuzz-service/
 ├── cmd/
 │   └── server/
 │       └── main.go                 # Application entry point & DI wiring
+├── docs/
+│   ├── swagger.go                  # Swagger package-level annotations
+│   ├── SWAGGER.md                  # Swagger documentation guide
+│   ├── swagger.json                # Generated OpenAPI spec (JSON)
+│   └── swagger.yaml                # Generated OpenAPI spec (YAML)
 ├── internal/
 │   ├── domain/                     # Core business logic (no dependencies)
 │   │   ├── entity/
@@ -338,7 +377,7 @@ fizzbuzz-service/
 │       ├── config/
 │       │   └── config.go           # Environment configuration
 │       ├── http/
-│       │   ├── handler/            # HTTP request handlers
+│       │   ├── handler/            # HTTP request handlers (with Swagger annotations)
 │       │   ├── middleware/         # Logging, recovery
 │       │   └── router.go           # Route definitions
 │       ├── persistence/
@@ -351,7 +390,7 @@ fizzbuzz-service/
 │   └── e2e/                        # End-to-end tests
 ├── Dockerfile                      # Multi-stage production build
 ├── docker-compose.yml              # Local development setup
-├── Makefile                        # Development commands
+├── Makefile                        # Development commands (includes swagger targets)
 └── README.md                       # This file
 ```
 
@@ -429,13 +468,22 @@ While GET would be semantically correct (idempotent, safe), POST was chosen beca
 - No URL length limitations
 - Cleaner API for complex parameters (strings with special characters)
 
+### Why go-swagger?
+
+go-swagger was chosen for API documentation because:
+- **Code-first approach**: Documentation lives with the code
+- **Type safety**: Generates specs from actual Go types
+- **Standard compliance**: Produces OpenAPI 2.0 specs
+- **Tooling support**: Interactive Swagger UI, validation, client generation
+- **No runtime overhead**: Documentation is generated at build time
+
 ---
 
 ## Future Improvements
 
 ### Short Term
 
-- [ ] Add OpenAPI/Swagger documentation
+- [x] Add OpenAPI/Swagger documentation
 - [ ] Add rate limiting middleware
 - [ ] Add request validation middleware (JSON schema)
 - [ ] Add Prometheus metrics endpoint
@@ -446,6 +494,7 @@ While GET would be semantically correct (idempotent, safe), POST was chosen beca
 - [ ] Distributed statistics with eventual consistency
 - [ ] Cache layer for repeated requests
 - [ ] API versioning (v1/fizzbuzz)
+- [ ] Migrate to OpenAPI 3.0
 
 ### Long Term
 
@@ -453,28 +502,30 @@ While GET would be semantically correct (idempotent, safe), POST was chosen beca
 - [ ] Event sourcing for statistics
 - [ ] Kubernetes Helm chart
 - [ ] Horizontal scaling with shared statistics store
+- [ ] Client SDK generation from Swagger spec
 
 ---
 
 ## Development Commands
 
 ```bash
-make help          # Show all available commands
-make run           # Run locally
-make test          # Run all tests
-make test-coverage # Generate coverage report
-make lint          # Run linter (requires golangci-lint)
-make fmt           # Format code
-make docker-run    # Run with Docker Compose
-make clean         # Clean build artifacts
+make help             # Show all available commands
+make run              # Run locally
+make test             # Run all tests
+make test-coverage    # Generate coverage report
+make lint             # Run linter (requires golangci-lint)
+make fmt              # Format code
+make swagger          # Generate Swagger documentation
+make swagger-serve    # Serve interactive Swagger UI
+make swagger-validate # Validate Swagger spec
+make docker-run       # Run with Docker Compose
+make clean            # Clean build artifacts
 ```
 
 ---
 
 ## License
 
-This project was created as a technical assessment.
+This project is an just an example of a possible implementations production grade architecture.
 
 ---
-
-*Built with ❤️ following Clean Architecture principles*

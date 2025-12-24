@@ -17,20 +17,58 @@ type FizzBuzzHandler struct {
 }
 
 // Request/Response DTOs
-type generateRequest struct {
-	Int1  int    `json:"int1"`
-	Int2  int    `json:"int2"`
-	Limit int    `json:"limit"`
-	Str1  string `json:"str1"`
-	Str2  string `json:"str2"`
+
+// swagger:parameters generateFizzBuzz
+type generateFizzBuzzParams struct {
+	// FizzBuzz generation parameters
+	// in: body
+	// required: true
+	Body generateRequest
 }
 
+// GenerateRequest represents the input for FizzBuzz generation
+// swagger:model
+type generateRequest struct {
+	// First divisor (must be > 0)
+	// required: true
+	// example: 3
+	Int1 int `json:"int1"`
+	// Second divisor (must be > 0)
+	// required: true
+	// example: 5
+	Int2 int `json:"int2"`
+	// Upper limit for the sequence (must be > 0 and <= MAX_LIMIT)
+	// required: true
+	// example: 15
+	Limit int `json:"limit"`
+	// String to replace multiples of int1
+	// required: true
+	// example: fizz
+	Str1 string `json:"str1"`
+	// String to replace multiples of int2
+	// required: true
+	// example: buzz
+	Str2 string `json:"str2"`
+}
+
+// GenerateResponse contains the FizzBuzz sequence
+// swagger:model
 type generateResponse struct {
+	// The generated FizzBuzz sequence
+	// required: true
+	// example: ["1","2","fizz","4","buzz","fizz","7","8","fizz","buzz","11","fizz","13","14","fizzbuzz"]
 	Result []string `json:"result"`
 }
 
+// ErrorResponse represents an error response
+// swagger:model
 type errorResponse struct {
-	Error   string   `json:"error"`
+	// Error message
+	// required: true
+	// example: invalid parameters
+	Error string `json:"error"`
+	// Detailed error messages
+	// required: false
 	Details []string `json:"details,omitempty"`
 }
 
@@ -50,7 +88,19 @@ func (h *FizzBuzzHandler) RegisterRoutes(r chi.Router) {
 	r.Post("/fizzbuzz", h.Generate)
 }
 
-// Generate handles POST /fizzbuzz - generates a fizzbuzz sequence
+// swagger:route POST /fizzbuzz fizzbuzz generateFizzBuzz
+//
+// # Generate FizzBuzz Sequence
+//
+// Generates a customizable FizzBuzz sequence based on the provided parameters.
+// The algorithm replaces numbers divisible by int1 with str1, numbers divisible
+// by int2 with str2, and numbers divisible by both with str1+str2.
+//
+// Responses:
+//
+//	200: generateResponse
+//	400: errorResponse
+//	500: errorResponse
 func (h *FizzBuzzHandler) Generate(w http.ResponseWriter, r *http.Request) {
 	var req generateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -74,6 +124,18 @@ func (h *FizzBuzzHandler) Generate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.writeJSON(w, http.StatusOK, generateResponse{Result: result})
+}
+
+// swagger:response generateResponse
+type generateResponseWrapper struct {
+	// in: body
+	Body generateResponse
+}
+
+// swagger:response errorResponse
+type errorResponseWrapper struct {
+	// in: body
+	Body errorResponse
 }
 
 // handleError maps domain errors to HTTP responses
