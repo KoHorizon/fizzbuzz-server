@@ -443,15 +443,25 @@ Statistics are updated in a goroutine to ensure:
 - The main request is not blocked by statistics operations
 - Statistics failures don't impact the primary FizzBuzz functionality
 - Better response times under high load
-
+- Updates complete even if the HTTP request finishes early (using detached context)
 ```go
-// Non-blocking statistics update
-go func(ctx context.Context) {
+// Non-blocking statistics update with detached context
+go func() {
+    // Create a new context with timeout, not tied to the request
+    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+    defer cancel()
+    
     if err := uc.statsUpdater.UpdateStats(ctx, query); err != nil {
-        uc.logger.Error("failed to update statistics", "error", err)
+        uc.logger.Error("failed to update statistics",
+            "error", err,
+            "query_key", query.Key(),
+        )
     }
-}(ctx)
+}()
 ```
+
+**Why use `context.Background()` instead of the request context?**
+The statistics update runs asynchronously and should complete even if the HTTP request is cancelled or times out. Using a detached context with its own timeout ensures reliability while preventing runaway goroutines.
 
 ### Why Include All Parameters in Statistics Key?
 

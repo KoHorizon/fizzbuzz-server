@@ -180,7 +180,7 @@ func TestGenerateFizzBuzzUseCase_Execute(t *testing.T) {
 		}
 
 		// Wait for async goroutine
-		time.Sleep(50 * time.Millisecond)
+		time.Sleep(100 * time.Millisecond)
 
 		calls := mockUpdater.getCalls()
 		if len(calls) != 1 {

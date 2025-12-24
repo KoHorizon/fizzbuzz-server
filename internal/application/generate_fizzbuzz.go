@@ -6,6 +6,7 @@ import (
 	"fizzbuzz-service/internal/domain/entity"
 	"fizzbuzz-service/internal/domain/service"
 	"log/slog"
+	"time"
 )
 
 type GenerateFizzBuzzUseCase struct {
@@ -49,14 +50,18 @@ func (uc *GenerateFizzBuzzUseCase) Generate(
 	// Update statistics asynchronously
 	// We use a separate goroutine to not block the main request
 	// Errors are logged but don't fail the main request (stats are non-critical)
-	go func(ctx context.Context) {
+	go func() {
+		// Create a new context with timeout, not tied to the request
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
 		if err := uc.statsUpdater.UpdateStats(ctx, query); err != nil {
 			uc.logger.Error("failed to update statistics",
 				"error", err,
 				"query_key", query.Key(),
 			)
 		}
-	}(ctx)
+	}()
 
 	return uc.generator.Generate(query), nil
 }
