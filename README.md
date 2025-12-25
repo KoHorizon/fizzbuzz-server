@@ -387,15 +387,21 @@ make test-e2e
 
 ```
 fizzbuzz-service/
+├── .github/
+│   └── workflows/
+│       └── ci.yml                  # GitHub Actions CI pipeline
 ├── cmd/
 │   └── server/
 │       └── main.go                 # Application entry point & DI wiring
 ├── docs/
-│   ├── swagger.go                  # Swagger package-level annotations
 │   ├── SWAGGER.md                  # Swagger documentation guide
+│   ├── swagger.go                  # Swagger package-level annotations
 │   ├── swagger.json                # Generated OpenAPI spec (JSON)
 │   └── swagger.yaml                # Generated OpenAPI spec (YAML)
 ├── internal/
+│   ├── application/                # Use cases (orchestration)
+│   │   ├── generate_fizzbuzz.go    # Generate sequence use case
+│   │   └── get_statistics.go       # Get stats use case
 │   ├── domain/                     # Core business logic (no dependencies)
 │   │   ├── entity/
 │   │   │   ├── fizzbuzz.go         # FizzBuzzQuery entity + validation
@@ -403,27 +409,45 @@ fizzbuzz-service/
 │   │   ├── service/
 │   │   │   └── fizzbuzz_generator.go  # Core algorithm
 │   │   └── errors.go               # Domain-specific errors
-│   ├── application/                # Use cases (orchestration)
-│   │   ├── generate_fizzbuzz.go    # Generate sequence use case
-│   │   └── get_statistics.go       # Get stats use case
 │   └── infrastructure/             # External concerns
 │       ├── config/
 │       │   └── config.go           # Environment configuration
 │       ├── http/
-│       │   ├── handler/            # HTTP request handlers (with Swagger annotations)
-│       │   ├── middleware/         # Logging, recovery
-│       │   └── router.go           # Route definitions
+│       │   ├── handler/
+│       │   │   ├── fizzbuzz_handler.go    # FizzBuzz endpoint handler (with Swagger annotations)
+│       │   │   ├── health_handler.go      # Health check handler
+│       │   │   └── statistics_handler.go  # Statistics endpoint handler
+│       │   ├── middleware/
+│       │   │   ├── logging.go      # Structured logging middleware
+│       │   │   └── recovery.go     # Panic recovery middleware
+│       │   └── router.go           # Route definitions & middleware stack
 │       ├── persistence/
-│       │   └── inmemory/           # In-memory statistics storage
+│       │   └── inmemory/
+│       │       └── statistics_repository.go  # In-memory statistics storage
 │       └── server/
+│           ├── config.go           # Server configuration
 │           └── server.go           # HTTP server with graceful shutdown
 ├── test/
-│   ├── unit/                       # Unit tests
-│   ├── integration/                # Integration tests
-│   └── e2e/                        # End-to-end tests
+│   ├── e2e/
+│   │   └── full_flow_test.go       # End-to-end tests with real HTTP server
+│   ├── integration/
+│   │   └── http_handler_test.go    # Integration tests (handlers + use cases)
+│   └── unit/
+│       ├── application/
+│       │   └── usecase_test.go     # Use case unit tests
+│       ├── domain/
+│       │   ├── entity_test.go      # Entity validation tests
+│       │   └── fizzbuzz_generator_test.go  # Generator algorithm tests
+│       └── infrastructure/
+│           └── statistics_repositoy_test.go  # Repository tests
+├── .dockerignore                   # Docker build exclusions
+├── .env.example                    # Environment variables template
+├── .gitignore                      # Git exclusions
 ├── Dockerfile                      # Multi-stage production build
 ├── docker-compose.yml              # Local development setup
-├── Makefile                        # Development commands (includes swagger targets)
+├── go.mod                          # Go module dependencies
+├── go.sum                          # Go dependency checksums
+├── Makefile                        # Development commands (build, test, swagger, etc.)
 └── README.md                       # This file
 ```
 
