@@ -185,20 +185,23 @@ This project includes **OpenAPI 2.0 (Swagger)** documentation for interactive AP
 
 **Three ways to view the documentation:**
 
-1. **Browse the raw spec files** (no installation needed):
-   - View `docs/swagger.yaml` directly in your editor or on GitHub
-   - GitHub renders YAML files with nice formatting
-   
-2. **Use online Swagger Editor** (no installation needed):
+1. **Use online Swagger Editor** (RECOMMENDED - interactive UI, no installation):
    - Go to https://editor.swagger.io/
-   - Copy/paste the contents of `docs/swagger.yaml`
+   - Click "File" → "Import file" and select `docs/swagger.yaml`
+   - Or copy/paste the YAML contents
+   - **This provides the full interactive Swagger UI experience**
+   - You can try out endpoints, see examples, and explore the API visually
    
-3. **Serve locally with Swagger UI**:
+2. **Serve locally with Swagger UI**:
    ```bash
    # Requires Go to be installed
    make swagger-serve
    # Then open http://localhost:8081/docs
    ```
+
+3. **Browse the raw YAML** (if you just need to check something quickly):
+   - View `docs/swagger.yaml` on GitHub or in your editor
+   - Note: This is just text - for proper API exploration, use option 1 or 2
 
 #### Regenerating Documentation (Optional)
 
