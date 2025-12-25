@@ -22,9 +22,9 @@ func NewRouter(
 	r := chi.NewRouter()
 
 	// Middleware stack (top = outermost, executes first)
-	r.Use(custommw.RecoveryMiddleware(logger))  // Custom: slog + JSON response
 	r.Use(middleware.RequestID)                 // Chi: inject X-Request-Id
 	r.Use(middleware.RealIP)                    // Chi: get real IP
+	r.Use(custommw.RecoveryMiddleware(logger))  // Custom: slog + JSON response
 	r.Use(custommw.LoggingMiddleware(logger))   // Custom: slog structured logging
 	r.Use(middleware.Timeout(30 * time.Second)) // Chi: request timeout
 
