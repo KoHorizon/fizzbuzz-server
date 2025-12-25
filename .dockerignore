@@ -1,0 +1,45 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+docs/
+*.md
+
+# Tests
+test/
+*_test.go
+coverage.txt
+coverage.html
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# CI/CD
+.github/
+
+# Build artifacts
+bin/
+build/
+dist/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files (use docker-compose for env vars)
+.env
+.env.local
+
+# Makefile (not needed in container)
+Makefile
