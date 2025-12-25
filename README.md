@@ -414,7 +414,7 @@ fizzbuzz-service/
 │       │   └── config.go           # Environment configuration
 │       ├── http/
 │       │   ├── handler/
-│       │   │   ├── fizzbuzz_handler.go    # FizzBuzz endpoint handler (with Swagger annotations)
+│       │   │   ├── fizzbuzz_handler.go    # FizzBuzz endpoint handler
 │       │   │   ├── health_handler.go      # Health check handler
 │       │   │   └── statistics_handler.go  # Statistics endpoint handler
 │       │   ├── middleware/
