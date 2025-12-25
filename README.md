@@ -179,17 +179,40 @@ sequenceDiagram
 
 This project includes **OpenAPI 2.0 (Swagger)** documentation for interactive API exploration.
 
-#### Generate Swagger Documentation
+#### Viewing the API Documentation
+
+**The generated `swagger.json` and `swagger.yaml` files are already committed to the `docs/` directory** - no generation step is required to view the API specification. This allows immediate review without installing any tools.
+
+**Three ways to view the documentation:**
+
+1. **Browse the raw spec files** (no installation needed):
+   - View `docs/swagger.yaml` directly in your editor or on GitHub
+   - GitHub renders YAML files with nice formatting
+   
+2. **Use online Swagger Editor** (no installation needed):
+   - Go to https://editor.swagger.io/
+   - Copy/paste the contents of `docs/swagger.yaml`
+   
+3. **Serve locally with Swagger UI**:
+   ```bash
+   # Requires Go to be installed
+   make swagger-serve
+   # Then open http://localhost:8081/docs
+   ```
+
+#### Regenerating Documentation (Optional)
+
+If you want to regenerate the Swagger files after making code changes:
 
 ```bash
 # Install swagger CLI (first time only)
 go install github.com/go-swagger/go-swagger/cmd/swagger@latest
 
-# Generate swagger.json and swagger.yaml
+# Regenerate swagger.json and swagger.yaml
 make swagger
 ```
 
-**Note on Generated Files**: The generated `swagger.json` and `swagger.yaml` files are committed to this repository to facilitate easier review and immediate API exploration. In a production environment, these would typically be generated during the CI/CD pipeline and not committed to version control.
+**Note**: For this take-home assignment, generated files are committed to facilitate easier review. In a production environment, these would typically be generated during the CI/CD pipeline and excluded from version control.
 
 #### View Interactive Documentation
 
@@ -492,9 +515,11 @@ While GET would be semantically correct (idempotent, safe), POST was chosen beca
 go-swagger was chosen for API documentation because:
 - **Code-first approach**: Documentation lives with the code
 - **Type safety**: Generates specs from actual Go types
-- **Standard compliance**: Produces OpenAPI 2.0 specs
-- **Tooling support**: Interactive Swagger UI, validation, client generation
+- **Mature tooling**: Stable, well-tested, production-ready since 2015
+- **Interactive Swagger UI**: Built-in support for documentation and testing
 - **No runtime overhead**: Documentation is generated at build time
+
+**Note on OpenAPI Version**: This project uses **OpenAPI 2.0** (Swagger specification) as go-swagger (v0.32.3, June 2025) does not support OpenAPI 3.x. While OpenAPI 3.0 (2017), 3.1 (2021), and 3.2 (2024) are the current standards with enhanced features like improved callback support, better schema composition, and JSON Schema alignment, go-swagger remains on OpenAPI 2.0. For this take-home assignment, the proven stability and comprehensive tooling of go-swagger was prioritized. In a production environment where OpenAPI 3.x features are required, modern alternatives like `swaggo/swag` (the most popular Go Swagger tool as of 2025, supports OpenAPI 3.0), `oapi-codegen`, or `kin-openapi` would be evaluated.
 
 ---
 
