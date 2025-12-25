@@ -189,6 +189,8 @@ go install github.com/go-swagger/go-swagger/cmd/swagger@latest
 make swagger
 ```
 
+**Note on Generated Files**: The generated `swagger.json` and `swagger.yaml` files are committed to this repository to facilitate easier review and immediate API exploration. In a production environment, these would typically be generated during the CI/CD pipeline and not committed to version control.
+
 #### View Interactive Documentation
 
 ```bash
