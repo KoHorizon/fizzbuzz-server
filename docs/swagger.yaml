@@ -1,0 +1,230 @@
+basePath: /
+consumes:
+    - application/json
+definitions:
+    FizzBuzzQueryResponse:
+        description: |-
+            FizzBuzzQueryResponse is the JSON representation of a query
+            Separate from FizzBuzzQuery to control API contract
+        properties:
+            int1:
+                format: int64
+                type: integer
+                x-go-name: Int1
+            int2:
+                format: int64
+                type: integer
+                x-go-name: Int2
+            limit:
+                format: int64
+                type: integer
+                x-go-name: Limit
+            str1:
+                type: string
+                x-go-name: Str1
+            str2:
+                type: string
+                x-go-name: Str2
+        type: object
+        x-go-package: fizzbuzz-service/internal/domain/entity
+    StatisticsSummary:
+        description: StatisticsSummary for swagger documentation
+        properties:
+            hits:
+                description: Number of times the most frequent request was made
+                example: 42
+                format: int64
+                type: integer
+                x-go-name: Hits
+            most_frequent_request:
+                $ref: '#/definitions/FizzBuzzQueryResponse'
+        required:
+            - hits
+        type: object
+        x-go-name: statisticsSummaryResponse
+        x-go-package: fizzbuzz-service/internal/infrastructure/http/handler
+    errorResponse:
+        description: ErrorResponse represents an error response
+        properties:
+            details:
+                description: Detailed error messages
+                items:
+                    type: string
+                type: array
+                x-go-name: Details
+            error:
+                description: Error message
+                example: invalid parameters
+                type: string
+                x-go-name: Error
+        required:
+            - error
+        type: object
+        x-go-package: fizzbuzz-service/internal/infrastructure/http/handler
+    generateRequest:
+        description: GenerateRequest represents the input for FizzBuzz generation
+        properties:
+            int1:
+                description: First divisor (must be > 0)
+                example: 3
+                format: int64
+                type: integer
+                x-go-name: Int1
+            int2:
+                description: Second divisor (must be > 0)
+                example: 5
+                format: int64
+                type: integer
+                x-go-name: Int2
+            limit:
+                description: Upper limit for the sequence (must be > 0 and <= MAX_LIMIT)
+                example: 15
+                format: int64
+                type: integer
+                x-go-name: Limit
+            str1:
+                description: String to replace multiples of int1
+                example: fizz
+                type: string
+                x-go-name: Str1
+            str2:
+                description: String to replace multiples of int2
+                example: buzz
+                type: string
+                x-go-name: Str2
+        required:
+            - int1
+            - int2
+            - limit
+            - str1
+            - str2
+        type: object
+        x-go-package: fizzbuzz-service/internal/infrastructure/http/handler
+    generateResponse:
+        description: GenerateResponse contains the FizzBuzz sequence
+        properties:
+            result:
+                description: The generated FizzBuzz sequence
+                example:
+                    - "1"
+                    - "2"
+                    - fizz
+                    - "4"
+                    - buzz
+                    - fizz
+                    - "7"
+                    - "8"
+                    - fizz
+                    - buzz
+                    - "11"
+                    - fizz
+                    - "13"
+                    - "14"
+                    - fizzbuzz
+                items:
+                    type: string
+                type: array
+                x-go-name: Result
+        required:
+            - result
+        type: object
+        x-go-package: fizzbuzz-service/internal/infrastructure/http/handler
+    healthResponse:
+        description: HealthResponse represents the health status
+        properties:
+            status:
+                description: Service health status
+                example: healthy
+                type: string
+                x-go-name: Status
+        required:
+            - status
+        type: object
+        x-go-package: fizzbuzz-service/internal/infrastructure/http/handler
+host: localhost:8080
+info:
+    contact:
+        email: rinoshan@hotmail.fr
+        name: KoHorizon
+    description: |-
+        A production-ready, customizable FizzBuzz REST API with statistics tracking.
+
+        This service generates FizzBuzz sequences based on custom divisors and replacement strings,
+        while tracking usage statistics to identify the most frequently requested configurations.
+    termsOfService: There are no TOS at this moment, use at your own risk.
+    title: FizzBuzz REST API
+    version: 1.0.0
+paths:
+    /fizzbuzz:
+        post:
+            description: |-
+                Generates a customizable FizzBuzz sequence based on the provided parameters.
+                The algorithm replaces numbers divisible by int1 with str1, numbers divisible
+                by int2 with str2, and numbers divisible by both with str1+str2.
+            operationId: generateFizzBuzz
+            parameters:
+                - description: FizzBuzz generation parameters
+                  in: body
+                  name: Body
+                  required: true
+                  schema:
+                    $ref: '#/definitions/generateRequest'
+            responses:
+                "200":
+                    $ref: '#/responses/generateResponse'
+                "400":
+                    $ref: '#/responses/errorResponse'
+                "500":
+                    $ref: '#/responses/errorResponse'
+            summary: Generate FizzBuzz Sequence
+            tags:
+                - fizzbuzz
+    /health:
+        get:
+            description: |-
+                Returns the current health status of the service.
+                This endpoint is designed for Kubernetes/Docker health checks.
+            operationId: healthCheck
+            responses:
+                "200":
+                    $ref: '#/responses/healthResponse'
+            summary: Health Check
+            tags:
+                - health
+    /statistics:
+        get:
+            description: |-
+                Returns the most frequently requested FizzBuzz configuration and its hit count.
+                If no requests have been made yet, returns null for most_frequent_request and 0 hits.
+            operationId: getStatistics
+            responses:
+                "200":
+                    $ref: '#/responses/statisticsResponse'
+                "500":
+                    $ref: '#/responses/errorResponse'
+            summary: Get Most Frequent Request
+            tags:
+                - statistics
+produces:
+    - application/json
+responses:
+    errorResponse:
+        description: ""
+        schema:
+            $ref: '#/definitions/errorResponse'
+    generateResponse:
+        description: ""
+        schema:
+            $ref: '#/definitions/generateResponse'
+    healthResponse:
+        description: ""
+        schema:
+            $ref: '#/definitions/healthResponse'
+    statisticsResponse:
+        description: ""
+        schema:
+            $ref: '#/definitions/StatisticsSummary'
+schemes:
+    - http
+    - https
+swagger: "2.0"

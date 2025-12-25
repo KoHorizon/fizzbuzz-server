@@ -1,0 +1,293 @@
+{
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "swagger": "2.0",
+  "info": {
+    "description": "A production-ready, customizable FizzBuzz REST API with statistics tracking.\n\nThis service generates FizzBuzz sequences based on custom divisors and replacement strings,\nwhile tracking usage statistics to identify the most frequently requested configurations.",
+    "title": "FizzBuzz REST API",
+    "termsOfService": "There are no TOS at this moment, use at your own risk.",
+    "contact": {
+      "name": "KoHorizon",
+      "email": "rinoshan@hotmail.fr"
+    },
+    "version": "1.0.0"
+  },
+  "host": "localhost:8080",
+  "basePath": "/",
+  "paths": {
+    "/fizzbuzz": {
+      "post": {
+        "description": "Generates a customizable FizzBuzz sequence based on the provided parameters.\nThe algorithm replaces numbers divisible by int1 with str1, numbers divisible\nby int2 with str2, and numbers divisible by both with str1+str2.",
+        "tags": [
+          "fizzbuzz"
+        ],
+        "summary": "Generate FizzBuzz Sequence",
+        "operationId": "generateFizzBuzz",
+        "parameters": [
+          {
+            "description": "FizzBuzz generation parameters",
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/generateRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/generateResponse"
+          },
+          "400": {
+            "$ref": "#/responses/errorResponse"
+          },
+          "500": {
+            "$ref": "#/responses/errorResponse"
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "description": "Returns the current health status of the service.\nThis endpoint is designed for Kubernetes/Docker health checks.",
+        "tags": [
+          "health"
+        ],
+        "summary": "Health Check",
+        "operationId": "healthCheck",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/healthResponse"
+          }
+        }
+      }
+    },
+    "/statistics": {
+      "get": {
+        "description": "Returns the most frequently requested FizzBuzz configuration and its hit count.\nIf no requests have been made yet, returns null for most_frequent_request and 0 hits.",
+        "tags": [
+          "statistics"
+        ],
+        "summary": "Get Most Frequent Request",
+        "operationId": "getStatistics",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/statisticsResponse"
+          },
+          "500": {
+            "$ref": "#/responses/errorResponse"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "FizzBuzzQueryResponse": {
+      "description": "FizzBuzzQueryResponse is the JSON representation of a query\nSeparate from FizzBuzzQuery to control API contract",
+      "type": "object",
+      "properties": {
+        "int1": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Int1"
+        },
+        "int2": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Int2"
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Limit"
+        },
+        "str1": {
+          "type": "string",
+          "x-go-name": "Str1"
+        },
+        "str2": {
+          "type": "string",
+          "x-go-name": "Str2"
+        }
+      },
+      "x-go-package": "fizzbuzz-service/internal/domain/entity"
+    },
+    "StatisticsSummary": {
+      "description": "StatisticsSummary for swagger documentation",
+      "type": "object",
+      "required": [
+        "hits"
+      ],
+      "properties": {
+        "hits": {
+          "description": "Number of times the most frequent request was made",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Hits",
+          "example": 42
+        },
+        "most_frequent_request": {
+          "$ref": "#/definitions/FizzBuzzQueryResponse"
+        }
+      },
+      "x-go-name": "statisticsSummaryResponse",
+      "x-go-package": "fizzbuzz-service/internal/infrastructure/http/handler"
+    },
+    "errorResponse": {
+      "description": "ErrorResponse represents an error response",
+      "type": "object",
+      "required": [
+        "error"
+      ],
+      "properties": {
+        "details": {
+          "description": "Detailed error messages",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Details"
+        },
+        "error": {
+          "description": "Error message",
+          "type": "string",
+          "x-go-name": "Error",
+          "example": "invalid parameters"
+        }
+      },
+      "x-go-package": "fizzbuzz-service/internal/infrastructure/http/handler"
+    },
+    "generateRequest": {
+      "description": "GenerateRequest represents the input for FizzBuzz generation",
+      "type": "object",
+      "required": [
+        "int1",
+        "int2",
+        "limit",
+        "str1",
+        "str2"
+      ],
+      "properties": {
+        "int1": {
+          "description": "First divisor (must be \u003e 0)",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Int1",
+          "example": 3
+        },
+        "int2": {
+          "description": "Second divisor (must be \u003e 0)",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Int2",
+          "example": 5
+        },
+        "limit": {
+          "description": "Upper limit for the sequence (must be \u003e 0 and \u003c= MAX_LIMIT)",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Limit",
+          "example": 15
+        },
+        "str1": {
+          "description": "String to replace multiples of int1",
+          "type": "string",
+          "x-go-name": "Str1",
+          "example": "fizz"
+        },
+        "str2": {
+          "description": "String to replace multiples of int2",
+          "type": "string",
+          "x-go-name": "Str2",
+          "example": "buzz"
+        }
+      },
+      "x-go-package": "fizzbuzz-service/internal/infrastructure/http/handler"
+    },
+    "generateResponse": {
+      "description": "GenerateResponse contains the FizzBuzz sequence",
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {
+          "description": "The generated FizzBuzz sequence",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Result",
+          "example": [
+            "1",
+            "2",
+            "fizz",
+            "4",
+            "buzz",
+            "fizz",
+            "7",
+            "8",
+            "fizz",
+            "buzz",
+            "11",
+            "fizz",
+            "13",
+            "14",
+            "fizzbuzz"
+          ]
+        }
+      },
+      "x-go-package": "fizzbuzz-service/internal/infrastructure/http/handler"
+    },
+    "healthResponse": {
+      "description": "HealthResponse represents the health status",
+      "type": "object",
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "description": "Service health status",
+          "type": "string",
+          "x-go-name": "Status",
+          "example": "healthy"
+        }
+      },
+      "x-go-package": "fizzbuzz-service/internal/infrastructure/http/handler"
+    }
+  },
+  "responses": {
+    "errorResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/errorResponse"
+      }
+    },
+    "generateResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/generateResponse"
+      }
+    },
+    "healthResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/healthResponse"
+      }
+    },
+    "statisticsResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/StatisticsSummary"
+      }
+    }
+  }
+}
