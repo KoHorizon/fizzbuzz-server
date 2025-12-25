@@ -145,7 +145,7 @@ sequenceDiagram
 
     C->>R: POST /fizzbuzz
     R->>M: Request
-    M->>M: RequestID, Logging, Recovery
+    M->>M: RequestID, RealIP, CORS, Recovery, Logging, Timeout
     M->>H: Request with context
     H->>H: Parse & Map to Domain Entity
     H->>UC: Generate(ctx, FizzBuzzQuery)
@@ -162,6 +162,17 @@ sequenceDiagram
         H-->>C: 200 OK with JSON
     end
 ```
+
+### Middleware Stack
+
+The middleware executes in the following order (top to bottom):
+
+1. **RequestID** (Chi): Generates unique request ID for tracing
+2. **RealIP** (Chi): Extracts real client IP address  
+3. **CORS** (Custom): Adds CORS headers for cross-origin requests (enables Swagger Editor testing)
+4. **Recovery** (Custom): Catches panics and returns structured JSON error responses
+5. **Logging** (Custom): Structured JSON logging with request details
+6. **Timeout** (Chi): Enforces 30-second request timeout
 
 ### Layer Responsibilities
 
@@ -191,6 +202,7 @@ This project includes **OpenAPI 2.0 (Swagger)** documentation for interactive AP
    - Or copy/paste the YAML contents
    - **This provides the full interactive Swagger UI experience**
    - You can try out endpoints, see examples, and explore the API visually
+   - **Note**: The API includes CORS headers, so you can test endpoints directly from the Swagger Editor
    
 2. **Serve locally with Swagger UI**:
    ```bash
@@ -418,6 +430,7 @@ fizzbuzz-service/
 │       │   │   ├── health_handler.go      # Health check handler
 │       │   │   └── statistics_handler.go  # Statistics endpoint handler
 │       │   ├── middleware/
+│       │   │   ├── cors.go         # CORS headers middleware
 │       │   │   ├── logging.go      # Structured logging middleware
 │       │   │   └── recovery.go     # Panic recovery middleware
 │       │   └── router.go           # Route definitions & middleware stack
