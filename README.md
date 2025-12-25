@@ -88,6 +88,8 @@ This project follows **Hexagonal Architecture** (also known as Ports & Adapters)
 
 ### High-Level Architecture
 
+> **Note**: If the Mermaid diagram below doesn't render on your device, please view it on the web at [https://github.com/KoHorizon/fizzbuzz-server](https://github.com/KoHorizon/fizzbuzz-server)
+
 ```mermaid
 graph TB
     subgraph External
@@ -128,6 +130,8 @@ graph TB
 ```
 
 ### Request Flow
+
+> **Note**: If the Mermaid diagram below doesn't render on your device, please view it on the web at [https://github.com/KoHorizon/fizzbuzz-server](https://github.com/KoHorizon/fizzbuzz-server)
 
 ```mermaid
 sequenceDiagram
@@ -292,6 +296,8 @@ Returns service health status.
 
 The project implements a **Testing Pyramid** approach with three distinct levels:
 
+> **Note**: If the Mermaid diagram below doesn't render on your device, please view it on the web at [https://github.com/KoHorizon/fizzbuzz-server](https://github.com/KoHorizon/fizzbuzz-server)
+
 ```mermaid
 graph TB
     subgraph Testing Pyramid
@@ -422,6 +428,8 @@ The server is configured with production-ready timeouts to prevent resource exha
 ## Design Decisions
 
 ### Why Clean Architecture?
+
+> **Note**: If the Mermaid diagram below doesn't render on your device, please view it on the web at [https://github.com/KoHorizon/fizzbuzz-server](https://github.com/KoHorizon/fizzbuzz-server)
 
 ```mermaid
 graph LR
