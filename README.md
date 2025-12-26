@@ -135,31 +135,37 @@ graph TB
 
 ```mermaid
 sequenceDiagram
-    participant C as Client
-    participant R as Router
-    participant M as Middleware
-    participant H as Handler
+    autonumber
+    actor Client
+    participant Router
+    participant MW as Middleware Stack
+    participant Handler
     participant UC as UseCase
-    participant G as Generator
-    participant S as StatsRepo
+    participant Gen as Generator
+    participant Stats as StatsRepo
 
-    C->>R: POST /fizzbuzz
-    R->>M: Request
-    M->>M: RequestID, RealIP, CORS, Recovery, Logging, Timeout
-    M->>H: Request with context
-    H->>H: Parse & Map to Domain Entity
-    H->>UC: Generate(ctx, FizzBuzzQuery)
-    UC->>UC: Validate Query
-    
-    alt Validation Failed
-        UC-->>H: ValidationError
-        H-->>C: 400 Bad Request
-    else Validation Passed
-        UC->>S: UpdateStats (async)
-        UC->>G: Generate(query)
-        G-->>UC: []string result
-        UC-->>H: []string result
-        H-->>C: 200 OK with JSON
+    Client->>Router: POST /fizzbuzz
+    Router->>MW: HTTP request
+    MW->>Handler: Request + context\n(RequestID, RealIP, timeout)
+
+    Handler->>Handler: Parse & map JSON\n→ FizzBuzzQuery
+    Handler->>UC: Generate(ctx, query)
+
+    UC->>UC: Validate query
+
+    alt Validation failed
+        UC-->>Handler: ValidationError
+        Handler-->>Client: 400 Bad Request (JSON)
+    else Validation passed
+        par Side effects
+            UC-->>Stats: UpdateStats(ctx, query) (async)
+        and Main flow
+            UC->>Gen: Generate(query)
+            Gen-->>UC: string result
+        end
+
+        UC-->>Handler: string result
+        Handler-->>Client: 200 OK (JSON)
     end
 ```
 
